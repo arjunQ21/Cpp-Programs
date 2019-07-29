@@ -2,6 +2,8 @@
 
 using namespace std ;
 
+
+
 class AccountHolder{
 	char name[20] ;
 	char type[20] ;
