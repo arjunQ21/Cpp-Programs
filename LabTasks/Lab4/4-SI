@@ -1,0 +1,25 @@
+#include <iostream>
+
+using namespace std ;
+
+class SI{
+	float p, t, r ;
+	public:
+		SI( float rate = 12){
+			p = 0 ;
+			r = rate ;
+			t = 0 ;
+		}
+		void showInterest(){
+			cout << "interest is: " << p * t * r / 100 ;
+		}
+		void showData(){
+			cout << "p = " << p << "t = " << t << " r = " << r ;
+		}
+};
+
+main(){
+	SI S ;
+	S.showData() ;
+	
+}
