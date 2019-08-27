@@ -32,9 +32,9 @@ class Triangle : public Shape{
 };
 
 main(){
-	//Triangle T(5, 4);
+	Triangle T(5, 4);
 	Rectangle R(5, 4);
-	//T.showArea();
+	T.showArea();
 	R.showArea();
 }
 
