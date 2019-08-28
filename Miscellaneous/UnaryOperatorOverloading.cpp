@@ -13,6 +13,9 @@ class index{
 		}
 		void operator ++() {
 			count -- ;
+			//can be any operation, not only ++
+			//can be no operation at all too
+			//its like calling this function only, we can do anything here
 		}
 };
 main(){
