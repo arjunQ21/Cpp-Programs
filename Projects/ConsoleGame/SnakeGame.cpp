@@ -1,17 +1,44 @@
 #include <iostream>
-#include <vector>
 #include <stdlib.h>
-
+#include <time.h>
+#include <conio.h>
+#include <stdio.h>
 using namespace std ;
 
 //for coordinate axes
 #define HEIGHT 10
 #define WIDTH 25
+#define KEY_UP 72
+#define KEY_DOWN 80
+#define KEY_LEFT 75
+#define KEY_RIGHT 77
 //ENUMs
 enum Direction{ no_dir, d_up, d_right, d_down, d_left };
-enum SnakePart{ no_part, s_body, s_head };
+enum SnakePart{ no_part, s_body, s_tail, s_head };
 //GLOBAL VARIABLES
 SnakePart positions[ HEIGHT * WIDTH + 1] ;
+Direction directions[ HEIGHT * WIDTH + 1] ;
+
+// Function Declarations
+
+int newDirectionPossible( Direction from, Direction to){
+	if(from == Direction(no_dir) || to == Direction(no_dir)){
+		return 0 ;
+	}
+	if(from == d_right && to == d_left ){
+		return 0 ;
+	}
+	if(from == d_left && to == d_right ){
+		return 0 ;
+	}
+	if(from == d_up && to == d_down ){
+		return 0 ;
+	}
+	if(from == d_down && to == d_up ){
+		return 0 ;
+	}
+	return 1 ;	
+}
 
 class Point{
 		void setUniIndex(){
@@ -24,10 +51,12 @@ class Point{
 	public:
 		int lineNo, fromLeft, uniIndex ;
 		static int height, width ;
+//		Direction direction ;
 		Point(){
 			lineNo = -1 ;
 			fromLeft = -1 ;	
 			uniIndex = -1 ;	
+//			direction = no_dir ;
 //			isValid() ;
 		}
 		Point(int line, int left ){
@@ -42,6 +71,33 @@ class Point{
 			lineNo = ( uniIndex - fromLeft ) / width + 1 ;
 			isValid() ;
 		}
+		static void showDirectionArray(){
+			int i ;
+			for(i = 1 ; i <= height * width ; i++){
+				cout << "\n[" << i << "] => " << Point(i).getDirection() ;
+			}
+		}	
+		static void resetDirections(){
+			int i ;
+			for(i = 1 ; i <= height * width ; i++){
+				directions[ i ] = Direction(no_dir) ;
+			}			
+		}	
+		Direction getDirection( ){
+			if(isInsideBounds()){
+				return directions[ uniIndex ] ;
+			}
+			cout << ", so returning no_dir at this point.\n" ;
+			return Direction( no_dir ) ;
+		}
+		void setDirection( Direction dir ){
+			if( isInsideBounds()){
+				directions[ uniIndex ] = dir ;
+				return ;
+			}
+			cout << ", so setting no_dir at this point.\n" ;
+			directions[uniIndex] = Direction(no_dir) ;			
+		}		
 		static Point above( Point a){
 			if(a.isInsideBounds()){
 				return Point( a.lineNo - 1, a.fromLeft) ;
@@ -65,6 +121,49 @@ class Point{
 				return Point( a.lineNo , a.fromLeft - 1 ) ;
 			}
 			cout << ", so cant find any point at left. Returning itself, i.e" << a.toString() ;
+		}
+		static Point aheadOf( Point a){
+			if(a.isValidPart()){
+				switch(a.getDirection()){
+					case Direction(d_right):
+						return Point::atRightOf( a ) ;
+						break ;
+					case Direction(d_left):
+						return Point::atLeftOf( a ) ;
+						break ;
+					case Direction(d_up):
+						return Point::above( a ) ;
+						break ;
+					case Direction(d_down):
+						return Point::below( a ) ;
+						break ;
+					default:
+						cout << "Cant find any point ahead of " << a.toString("", ", so returning itself.\n") ;
+						return a ;				
+				}
+			}
+			cout << ", So cant find any point ahead of " << a.toString("", ", so returning itself.\n") ;
+			return a ;
+		}
+		int hasValidDirection(){
+			if(getDirection() == Direction(no_dir)){
+				cout << "Invalid Part at " << toString() << ", because there is no direction data at this point.\n" ;
+				return 0 ;
+			}
+			return 1 ;			
+		}
+		int hasValidPart(){
+			if(positions[ uniIndex ] == SnakePart(no_part)){
+				cout << "Invalid Part at " << toString() << ", because there is no snakePart data at this point.\n" ;
+				return 0 ;
+			}	
+			return 1 ;		
+		}
+		int isValidPart(){
+			if(hasValidPart() && hasValidDirection() && isInsideBounds()){
+				return 1 ;
+			}
+			return 0 ;
 		}
 		static SnakePart getSnakePartAt( Point p){
 			if(p.isInsideBounds()){
@@ -151,7 +250,10 @@ class Point{
 			}
 			cout << "Point " << toString() << " is not within bounds (" << height << ", " << width << " )." ;
 			return 0 ;			
-		}		
+		}	
+		operator == ( Point a){
+			return uniIndex == a.uniIndex ;
+		}	
 		
 };
 int Point::height = HEIGHT ;
@@ -159,21 +261,65 @@ int Point::width = WIDTH ;
 
 //Point activePositions[ HEIGHT * WIDTH + 1] ;
 
+class Graph ;
+
 class Snake{
 	public:
 		int length = 3 ;
-		Point headAt ;
+		Point headAt, tailAt ;
 //		Point activePoints[ HEIGHT * WIDTH + 1] ;
+		string  bodyLetter, tailLetter ;
 		Direction activeDirection = d_right ;
 		Snake(){
 			headAt = Point(5, 5) ;
+			tailAt = Point(5, 2) ;
+			resetParts() ;
+			bodyLetter = "*" ;
+			tailLetter = "+" ;
+//			addPart(Point(5, 2), Direction(d_right), SnakePart(s_tail)) ;
 		}
-		void addPart( Point P, Direction dir, SnakePart part = s_body ){
-			if(P.isInsideBounds()){
-				
+		void removePart( Point at ){
+			directions[at.uniIndex] = Direction(no_dir) ;
+			positions[at.uniIndex] = SnakePart(no_part) ;
+		}
+		void addPart( Point At, Direction dir, SnakePart part = s_body ){
+			if(At.isInsideBounds()){
+				if(!( part == SnakePart(no_part) || dir == Direction(no_dir))){
+					positions[ At.uniIndex ] = part ;
+					At.setDirection( dir ) ;
+				}else{
+					cout << "Either direction or part is empty. Cant add this data at " << At.toString("Point") <<".\n" ;
+					return ;
+				}
+//				Graph::setDirection(dir,  At ) ;
+				if(part == SnakePart(s_head) ){
+					headAt = At ;
+				}
+				if(part == SnakePart( s_tail )){
+					tailAt = At ;
+				}
+				return ;
+			}
+			cout << ", so cant add part at this point.\n" ;
+		}
+		void resetParts(){
+			int i ;
+			for( i = 1 ; i <= Point::height * Point::width ; i++){
+				positions[i] = SnakePart(no_part) ;
 			}
 		}
-		
+		void moveOneStep( Direction dir ){
+			if(newDirectionPossible(headAt.getDirection(), dir)){
+				Point newHeadAt = Point::aheadOf( headAt );
+				Point newTailAt = Point::aheadOf( tailAt ) ;
+				removePart( tailAt ) ;
+				headAt = newHeadAt ;
+				addPart(headAt, dir , s_head) ;
+				tailAt = newTailAt ;
+			}else{
+				cout << "cant move in this direction.\n";
+			}
+		}
 };
 
 
@@ -182,10 +328,8 @@ class Graph{
 	public:
 
 	static int height, width;
-	Direction directions[ HEIGHT * WIDTH + 1] ;
-	Direction d_resetter  ;
 	Snake snake;
-	
+	Direction d_resetter ;
 	int paddingLeft ;
 	string borderH, borderV, default_content, padding, paddingLeftText, resetter ;
 		Graph(){
@@ -208,14 +352,9 @@ class Graph{
 			for(i = 1 ; i <= height * width ; i++){
 				cout << "\n[" << i << "] => " << getInput(i) ;
 			}
-		}
-		void showDirectionArray(){
-			int i ;
-			for(i = 1 ; i <= height * width ; i++){
-				cout << "\n[" << i << "] => " << getDirection(i) ;
-			}
 		}		
 		void show(){
+			system("CLS") ;
 			cout << endl << endl ;
 			int i ;
 			for( i = 0 ; i <= height + 1 ; i++ ){
@@ -247,24 +386,52 @@ class Graph{
 			}
 			cout << ", so cant put '" << str << "' at that point.\n" ;
 		}
-		Direction getDirection( Point at ){
-			if(at.isInsideBounds()){
-				return directions[at.uniIndex] ;
-			}
-			cout << ", so returning no_dir at this point.\n" ;
-			return Direction( no_dir ) ;
-		}
-		void setDirection(Direction dir, Point at){
-			if(at.isInsideBounds()){
-				directions[at.uniIndex] = dir ;
-				return ;
-			}
-			cout << ", so setting no_dir at this point.\n" ;
-			directions[at.uniIndex] = Direction(no_dir) ;			
-		}		
+		
 		void plotSnake(){
 			int i ;
-				
+			resetInputs() ;
+			Point currentPoint = snake.tailAt ;
+			while( 1 ){
+				if(!currentPoint.isInsideBounds()){
+					show() ;
+					break ;
+				}
+				string inputLetter = "~" ;
+				// head may not have direction, but direction is compulsory for all other points
+//				if(!(currentPoint == snake.headAt) ){
+					if(currentPoint.getDirection() == Direction(no_dir)){
+						cout << "No direction data at " << currentPoint.toString("Point", ", so stopping plotting from this point.\n") ;
+						break ;
+					}
+//				}
+				if(currentPoint == snake.headAt ){
+					switch ( currentPoint.getDirection() )	{
+						case Direction( d_up ):
+							inputLetter = "^" ;
+							break ;
+						case Direction(d_right):
+							inputLetter = ">" ;
+							break ;
+						case Direction (d_left ):
+							inputLetter = "<" ;
+							break ;
+						case Direction (d_down)	:
+							inputLetter = "+" ;
+							break ;		
+					}
+				}else if(currentPoint == snake.tailAt){
+					inputLetter = snake.tailLetter ;
+				}else{
+					// for body
+					inputLetter = snake.bodyLetter ;
+				}
+				setInput( inputLetter, currentPoint ) ;
+				if(currentPoint == snake.headAt){
+					show() ;
+					break ;
+				}
+				currentPoint = Point::aheadOf( currentPoint );
+			}
 		}
 	private:		
 		void setInput(string str, Point at){
@@ -290,7 +457,8 @@ class Graph{
 		void resetDirections(){
 			int i ;
 			for( i = 1 ; i <= height * width  ; i++){
-				setDirection(d_resetter , Point(i)) ;
+				Point(i).setDirection(d_resetter) ;
+//				setDirection(d_resetter , Point(i)) ;
 			}
 		}		
 		void showLine(int lineNumber ){
@@ -334,19 +502,43 @@ int Graph::height = HEIGHT ;
 int Graph::width = WIDTH ;
 
 
-
 main(){
 	Graph G ;
-	G.setDirection(d_right, Point(2, 2)) ;
-	G.setDirection(d_right, Point(2, 3)) ;
-	G.setDirection(d_down, Point(2, 4)) ;
-	G.setDirection(d_down, Point(3, 4)) ;
-	G.setDirection(d_down, Point(4, 4)) ;
-	G.setDirection(d_right, Point(5, 4)) ;
-	G.setDirection(d_right, Point(5, 5)) ;
-	G.setDirection(d_right, Point(5, 6)) ;
-	G.snake.headAt = Point(5, 6) ;
-	G.showInputArray() ;
-//	G.showDirectionArray() ;
-	G.show() ;
+	G.snake.addPart(Point(2, 2), d_right, s_tail ) ;
+	G.snake.addPart(Point(2, 3), d_right) ;
+	G.snake.addPart(Point(2, 4), d_down) ;
+	G.snake.addPart(Point(3, 4), d_down) ;
+	G.snake.addPart(Point(4, 4), d_down) ;
+	G.snake.addPart(Point(5, 4), d_right) ;
+	G.snake.addPart(Point(5, 5), d_right) ;
+	G.snake.addPart(Point(5, 6), d_right , s_head) ;
+	G.plotSnake() ;
+	char input ;
+	int i = 0 ;
+	while( (input = getch() ) != 27 ){
+//		if(clock() % 1000 == 0){
+			cout << "inside timer.\n";
+			switch(input){
+				case KEY_UP:
+					G.snake.moveOneStep( Direction(d_up)) ;
+					G.plotSnake() ;
+					break ;
+				case KEY_DOWN:
+					G.snake.moveOneStep( Direction(d_down)) ;
+					G.plotSnake() ;
+					break ;
+				case KEY_LEFT:
+					G.snake.moveOneStep( Direction(d_left)) ;
+					G.plotSnake() ;
+					break ;
+				case KEY_RIGHT:
+					G.snake.moveOneStep( Direction(d_right)) ;
+					G.plotSnake() ;
+					break ;	
+				default:
+					cout << "invalid input '" << input << "' .\n";			
+			}
+//		}
+	}
+	
 }
