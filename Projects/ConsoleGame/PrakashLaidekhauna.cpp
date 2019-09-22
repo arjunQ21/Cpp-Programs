@@ -503,42 +503,8 @@ int Graph::width = WIDTH ;
 
 
 main(){
-	Graph G ;
-	G.snake.addPart(Point(2, 2), d_right, s_tail ) ;
-	G.snake.addPart(Point(2, 3), d_right) ;
-	G.snake.addPart(Point(2, 4), d_down) ;
-	G.snake.addPart(Point(3, 4), d_down) ;
-	G.snake.addPart(Point(4, 4), d_down) ;
-	G.snake.addPart(Point(5, 4), d_right) ;
-	G.snake.addPart(Point(5, 5), d_right) ;
-	G.snake.addPart(Point(5, 6), d_right , s_head) ;
-	G.plotSnake() ;
-	char input ;
-	int i = 0 ;
-	while( (input = getch() ) != 27 ){
-//		if(clock() % 1000 == 0){
-			cout << "inside timer.\n";
-			switch(input){
-				case KEY_UP:
-					G.snake.moveOneStep( Direction(d_up)) ;
-					G.plotSnake() ;
-					break ;
-				case KEY_DOWN:
-					G.snake.moveOneStep( Direction(d_down)) ;
-					G.plotSnake() ;
-					break ;
-				case KEY_LEFT:
-					G.snake.moveOneStep( Direction(d_left)) ;
-					G.plotSnake() ;
-					break ;
-				case KEY_RIGHT:
-					G.snake.moveOneStep( Direction(d_right)) ;
-					G.plotSnake() ;
-					break ;	
-				default:
-					cout << "invalid input '" << input << "' .\n";			
-			}
-//		}
-	}
+	Point p(5, 4) ;
+	p = 29 ;
+	cout << p.toString() ;
 	
 }
