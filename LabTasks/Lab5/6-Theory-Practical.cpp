@@ -12,8 +12,9 @@ class Student{
 		void showRoll(){
 			cout << "\nRoll No.: " << roll ;
 		}
+//		virtual void showMarks
 };
-class Theory : public Student{
+class Theory : virtual public Student{
 	protected:
 		float sub1, sub2 ;
 	public:
@@ -25,7 +26,7 @@ class Theory : public Student{
 			cout << "\nMarks in Theory => Sub1: " << sub1 << ", Sub2: " << sub2 ;
 		}
 };
-class Practical : public Student{
+class Practical : virtual public Student{
 	protected:
 		float sub1, sub2 ;
 	public:
@@ -39,13 +40,6 @@ class Practical : public Student{
 };
 class Result : public Theory, public Practical{
 	public: 
-	//	overriding setRoll methods, derived from Theory and Practical
-		void setRoll( int a){
-			Theory::setRoll(a) ;
-			Practical::setRoll(a) ;
-//			roll = a ; // invalid, because there are 2 roll, one from theory and one from practical, so its ambigious
-
-		}
 		void showTotal(){
 			cout << "\nTotal Marks => Sub1: " << Theory::sub1 + Practical::sub1 << ", Sub2: " << Theory::sub2 + Practical::sub2 ;
 		}
@@ -59,9 +53,7 @@ main(){
 	R.Theory::setMarks(29, 32) ;
 	//setting practical marks in 2 subs
 	R.Practical::setMarks(32, 29) ;
-	//showing roll no from theory class
-	//it can be shown from Practical class too, since it has been set for both classes in setRoll method of Result class.
-	R.Theory::showRoll() ;
+	R.showRoll() ;
 	//Showing marks in theory and practical
 	R.Theory::showMarks() ;
 	R.Practical::showMarks() ;
