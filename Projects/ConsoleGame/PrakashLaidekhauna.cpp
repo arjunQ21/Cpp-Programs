@@ -6,7 +6,7 @@
 using namespace std ;
 
 //for coordinate axes
-#define HEIGHT 10
+#define HEIGHT 20
 #define WIDTH 25
 #define KEY_UP 72
 #define KEY_DOWN 80
@@ -122,9 +122,34 @@ class Point{
 			}
 			cout << ", so cant find any point at left. Returning itself, i.e" << a.toString() ;
 		}
-		static Point aheadOf( Point a){
-			if(a.isValidPart()){
-				switch(a.getDirection()){
+//		static Point aheadByDirection( Point a, Direction dir){
+//			if(dir != no_dir ){
+//				switch( dir ){
+//					case Direction(d_right):
+//						return Point::atRightOf( a ) ;
+//						break ;
+//					case Direction(d_left):
+//						return Point::atLeftOf( a ) ;
+//						break ;
+//					case Direction(d_up):
+//						return Point::above( a ) ;
+//						break ;
+//					case Direction(d_down):
+//						return Point::below( a ) ;
+//						break ;
+//					default:
+//						cout << "Cant find any point ahead of " << a.toString("", ", so returning itself.\n") ;
+//						return a ;				
+//				}			
+//			}else{
+//				cout << "Cant find any point ahead of " << a.toString("", ", since no_dir is passed as direction. so returning itself.\n") ;
+//				return a ;
+//			}
+//		}
+		static Point aheadOf( Point a, Direction dir = no_dir){
+			if(dir == no_dir ) dir = a.getDirection() ;
+ 			if(a.isValidPart()){
+				switch( dir ){
 					case Direction(d_right):
 						return Point::atRightOf( a ) ;
 						break ;
@@ -187,9 +212,9 @@ class Point{
 		int containsSnake(){
 			if(isInsideBounds()){
 				int i ;
-				SnakePart b = s_body, h = s_head ;
 				for( i = 1 ; i <= HEIGHT * WIDTH ; i++){
-					if(positions[ uniIndex ] == b || positions[ uniIndex ] == h){
+					if(positions[ uniIndex ] == SnakePart(s_body) ){
+//						cout << positions[uniIndex] ;
 						return 1 ;
 					}
 				}
@@ -310,11 +335,13 @@ class Snake{
 		}
 		void moveOneStep( Direction dir ){
 			if(directionChangePossible(headAt.getDirection(), dir)){
-				Point newHeadAt = Point::aheadOf( headAt );
+				Point newHeadAt = Point::aheadOf(headAt, dir) ;
 				Point newTailAt = Point::aheadOf( tailAt ) ;
 				removePart( tailAt ) ;
+				addPart(headAt, headAt.getDirection(), s_body ) ;
+				
+				addPart(newHeadAt, dir , s_head) ;
 				headAt = newHeadAt ;
-				addPart(headAt, dir , s_head) ;
 				tailAt = newTailAt ;
 			}else{
 				cout << "cant move in this direction.\n";
@@ -468,7 +495,7 @@ class Graph{
 			lineOut.append(borderV) ;
 			//top border and bottom border
 			if((lineNumber == 0) || (lineNumber == height + 1)) {
-				lineOut.append(getStringWith(width, borderH)) ;	
+				lineOut.append(getStringWith(width * 2, borderH)) ;	
 			}else{
 			//line specific options
 				int i  ;
@@ -480,6 +507,7 @@ class Graph{
 					}else{
 						lineOut.append(getInput(i)) ;
 					}
+					lineOut.append(" ") ;
 				}
 			
 			}
@@ -503,8 +531,9 @@ int Graph::width = WIDTH ;
 
 
 main(){
-	Point p(5, 4) ;
-	p = 29 ;
-	cout << p.toString() ;
+	Point P(5, 4) ;
+	Graph G ;
+	G.snake.addPart(P, d_down, s_body ) ;
+	cout << P.containsSnake() ;
 	
 }

@@ -7,7 +7,7 @@ using namespace std ;
 
 //for coordinate axes
 #define HEIGHT 10
-#define WIDTH 25
+#define WIDTH 10
 #define KEY_UP 72
 #define KEY_DOWN 80
 #define KEY_LEFT 75
@@ -39,6 +39,26 @@ int directionChangePossible( Direction from, Direction to){
 	}
 	return 1 ;	
 }
+
+Direction oppositeDirectionOf( Direction dir){
+	switch(dir){
+		case no_dir:
+			cout << "there is no direction opposite of no_dir., returning itself." ;
+			return dir ;
+		case d_right:
+			return d_left ;
+		case d_left :
+			return d_right ;
+		case d_up:
+			return d_down ;
+		case d_down:
+			return d_up ;				
+	}
+}
+
+//int ateItself( Snake s){
+//	static int l 
+//}
 
 class Point{
 		void setUniIndex(){
@@ -122,9 +142,34 @@ class Point{
 			}
 			cout << ", so cant find any point at left. Returning itself, i.e" << a.toString() ;
 		}
-		static Point aheadOf( Point a){
-			if(a.isValidPart()){
-				switch(a.getDirection()){
+//		static Point aheadByDirection( Point a, Direction dir){
+//			if(dir != no_dir ){
+//				switch( dir ){
+//					case Direction(d_right):
+//						return Point::atRightOf( a ) ;
+//						break ;
+//					case Direction(d_left):
+//						return Point::atLeftOf( a ) ;
+//						break ;
+//					case Direction(d_up):
+//						return Point::above( a ) ;
+//						break ;
+//					case Direction(d_down):
+//						return Point::below( a ) ;
+//						break ;
+//					default:
+//						cout << "Cant find any point ahead of " << a.toString("", ", so returning itself.\n") ;
+//						return a ;				
+//				}			
+//			}else{
+//				cout << "Cant find any point ahead of " << a.toString("", ", since no_dir is passed as direction. so returning itself.\n") ;
+//				return a ;
+//			}
+//		}
+		static Point aheadOf( Point a, Direction dir = no_dir){
+			if(dir == no_dir ) dir = a.getDirection() ;
+ 			if(a.isValidPart()){
+				switch( dir ){
 					case Direction(d_right):
 						return Point::atRightOf( a ) ;
 						break ;
@@ -187,9 +232,9 @@ class Point{
 		int containsSnake(){
 			if(isInsideBounds()){
 				int i ;
-				SnakePart b = s_body, h = s_head ;
 				for( i = 1 ; i <= HEIGHT * WIDTH ; i++){
-					if(positions[ uniIndex ] == b || positions[ uniIndex ] == h){
+					if(positions[ uniIndex ] == SnakePart(s_body) ){
+//						cout << positions[uniIndex] ;
 						return 1 ;
 					}
 				}
@@ -310,15 +355,46 @@ class Snake{
 		}
 		void moveOneStep( Direction dir ){
 			if(directionChangePossible(headAt.getDirection(), dir)){
-				Point newHeadAt = Point::aheadOf( headAt );
+				Point newHeadAt = Point::aheadOf(headAt, dir ) ;
 				Point newTailAt = Point::aheadOf( tailAt ) ;
 				removePart( tailAt ) ;
+				addPart(headAt, dir , s_body ) ;
+				addPart(newHeadAt, dir , s_head) ;
 				headAt = newHeadAt ;
-				addPart(headAt, dir , s_head) ;
 				tailAt = newTailAt ;
 			}else{
 				cout << "cant move in this direction.\n";
 			}
+		}
+		int getLength(){
+			int i ;
+			Point P = tailAt ;
+			for( i = 1 ; i <= HEIGHT * WIDTH ; i++){
+				P = Point::aheadOf(P) ;
+				if( P == headAt){
+					break ;
+				}
+			}
+			return ( i <= HEIGHT * WIDTH ) ? ++i : i ;
+		}
+		void increaseLength(){
+			Direction dir = tailAt.getDirection() ;
+			Point newTailAt = Point::aheadOf(tailAt,oppositeDirectionOf(dir) ) ;
+			if(newTailAt.isInsideBounds()){
+				addPart(tailAt, dir , s_body) ;
+				tailAt = Point::aheadOf(tailAt,oppositeDirectionOf(dir) ) ;
+				addPart(tailAt, dir , s_tail ) ;
+				cout << "\nlength incremented." ;
+			}
+		}
+		int ateItself(){
+			static int lastLength = getLength() ;
+//			cout << "\n Last len: " << lastLength << ", present len: " << getLength() ;
+			if(lastLength > getLength()){
+				return 1 ;
+			}
+			lastLength = getLength() ;
+			return 0 ;
 		}
 };
 
@@ -432,6 +508,8 @@ class Graph{
 				}
 				currentPoint = Point::aheadOf( currentPoint );
 			}
+			cout << snake.headAt.toString("Head at: ") ;
+			cout << endl << "Length: " << snake.getLength() << endl ;
 		}
 	private:		
 		void setInput(string str, Point at){
@@ -468,7 +546,7 @@ class Graph{
 			lineOut.append(borderV) ;
 			//top border and bottom border
 			if((lineNumber == 0) || (lineNumber == height + 1)) {
-				lineOut.append(getStringWith(width, borderH)) ;	
+				lineOut.append(getStringWith(width * 2, borderH)) ;	
 			}else{
 			//line specific options
 				int i  ;
@@ -480,6 +558,7 @@ class Graph{
 					}else{
 						lineOut.append(getInput(i)) ;
 					}
+					lineOut.append(" ") ;
 				}
 			
 			}
@@ -510,14 +589,25 @@ main(){
 	G.snake.addPart(Point(3, 4), d_down) ;
 	G.snake.addPart(Point(4, 4), d_down) ;
 	G.snake.addPart(Point(5, 4), d_right) ;
-	G.snake.addPart(Point(5, 5), d_right) ;
-	G.snake.addPart(Point(5, 6), d_right , s_head) ;
-	G.plotSnake() ;
+	G.snake.addPart(Point(5, 5), d_down) ;
+	G.snake.addPart(Point(6, 5), d_down) ;
+	G.snake.addPart(Point(7, 5), d_right) ;
+	G.snake.addPart(Point(7, 6), d_right) ;
+	G.snake.addPart(Point(7, 7), d_right) ;
+	G.snake.addPart(Point(7, 8), d_right , s_head) ;
+//	G.snake.addPart(Point(5, 6), d_right , s_head) ;
+	cout << "Use arrow keys to move the snake.\n" ;
+	cout << "Press any key to start game,\n 'esc' to end game at any moment." ;
 	char input ;
 	int i = 0 ;
+	input = getch() ;
+	if(input == 27){
+		exit(0) ;
+	}
+	G.plotSnake() ;
 	while( (input = getch() ) != 27 ){
 //		if(clock() % 1000 == 0){
-			cout << "inside timer.\n";
+//			cout << "inside timer.\n";
 			switch(input){
 				case KEY_UP:
 					G.snake.moveOneStep( Direction(d_up)) ;
@@ -538,6 +628,15 @@ main(){
 				default:
 					cout << "invalid input '" << input << "' .\n";			
 			}
+			if(G.snake.ateItself() || G.snake.headAt.isInBorder()){
+				cout << "\n\nYou died." ;
+				break ;
+			}
+//			}
+//			i++ ;
+//			if( i % 6 == 0){
+//			G.snake.increaseLength() ;
+//			}
 //		}
 	}
 	
