@@ -1,13 +1,12 @@
 #include <iostream>
-#include <stdlib.h>
 #include <time.h>
+#include <cstdlib>
 #include <conio.h>
-#include <stdio.h>
 using namespace std ;
 
 //for coordinate axes
 #define HEIGHT 10
-#define WIDTH 10
+#define WIDTH 15
 #define KEY_UP 72
 #define KEY_DOWN 80
 #define KEY_LEFT 75
@@ -18,7 +17,7 @@ enum SnakePart{ no_part, s_body, s_tail, s_head };
 //GLOBAL VARIABLES
 SnakePart positions[ HEIGHT * WIDTH + 1] ;
 Direction directions[ HEIGHT * WIDTH + 1] ;
-
+int updateInterval = 800 ;
 // Function Declarations
 
 int directionChangePossible( Direction from, Direction to){
@@ -59,6 +58,8 @@ Direction oppositeDirectionOf( Direction dir){
 //int ateItself( Snake s){
 //	static int l 
 //}
+
+
 
 class Point{
 		void setUniIndex(){
@@ -123,24 +124,28 @@ class Point{
 				return Point( a.lineNo - 1, a.fromLeft) ;
 			}
 			cout << ", so cant find any point above. Returning itself, i.e" << a.toString() ;
+			return a;
 		}
 		static Point below( Point a){
 			if(a.isInsideBounds()){
 				return Point( a.lineNo + 1, a.fromLeft) ;
 			}
 			cout << ", so cant find any point below. Returning itself, i.e" << a.toString() ;
+			return a;
 		}
 		static Point atRightOf( Point a){
 			if(a.isInsideBounds()){
 				return Point( a.lineNo , a.fromLeft + 1) ;
 			}
 			cout << ", so cant find any point at right. Returning itself, i.e" << a.toString() ;
+			return a;
 		}
 		static Point atLeftOf( Point a){
 			if(a.isInsideBounds()){
 				return Point( a.lineNo , a.fromLeft - 1 ) ;
 			}
 			cout << ", so cant find any point at left. Returning itself, i.e" << a.toString() ;
+			return a;
 		}
 //		static Point aheadByDirection( Point a, Direction dir){
 //			if(dir != no_dir ){
@@ -233,7 +238,7 @@ class Point{
 			if(isInsideBounds()){
 				int i ;
 				for( i = 1 ; i <= HEIGHT * WIDTH ; i++){
-					if(positions[ uniIndex ] == SnakePart(s_body) ){
+					if(positions[ uniIndex ] != SnakePart(no_part)){
 //						cout << positions[uniIndex] ;
 						return 1 ;
 					}
@@ -398,6 +403,65 @@ class Snake{
 		}
 };
 
+class Food{
+	public:
+		static int count ;
+		int score ;
+		int eaten ;
+		Point at ;
+		Food(){
+			
+		}
+		Food(Point atPoint){
+			if(atPoint.isInsideBounds()){				
+				at = atPoint;
+			}else{
+				cout << "so, food may not be at suitable point." ;
+				at = -- atPoint.uniIndex;
+			}
+				score = 1 ;
+				count ++ ;
+				eaten = 0 ;
+		}
+		void setScore( int c){
+			if(c <= 5 ){
+				score = c ;
+			}
+		}
+//		static Food atRandomPoint( ){
+//			int random = rand() % ( HEIGHT * WIDTH ) + 1 ;
+//			Point p = random ;
+//			if(p.containsSnake()){
+//				return Food::atRandomPoint() ;
+//			}else{
+//				return(Food(p)) ;
+//			}
+//		}
+		static Food atRandomPoint(){
+			int inactiveSnakeParts[ HEIGHT * WIDTH + 1] ; 
+			int i, count = 0, randIndex;
+			for(i = 1 ;i <= HEIGHT * WIDTH ; i++){
+				if(Point(i).containsSnake()){
+//					inactiveSnakeParts[ i ] = -1 ;
+					continue ;
+				}else{
+					inactiveSnakeParts[ ++count ] = i ;
+//					count ++ ;
+				}
+			}
+			if(count == 0){
+				cout << "You Won, Congrats." ;
+				exit(0) ;
+//				return Food(Point(1)) ;
+			}else{
+				randIndex = inactiveSnakeParts[ rand() % ( count ) + 1 ] ;
+				return Food(Point(randIndex)) ;
+			}
+			
+		}
+//		static Point 
+};
+int Food::count = 0 ;
 
 class Graph{
 	string inputLetters[HEIGHT * WIDTH + 1] ;
@@ -405,6 +469,7 @@ class Graph{
 
 	static int height, width;
 	Snake snake;
+	Food food ;
 	Direction d_resetter ;
 	int paddingLeft ;
 	string borderH, borderV, default_content, padding, paddingLeftText, resetter ;
@@ -420,6 +485,7 @@ class Graph{
 			d_resetter = no_dir ;
 			paddingLeftText = getStringWith(paddingLeft, padding) ;
 //			cout << inputLetters == NULL ;
+			food = Food::atRandomPoint() ;
 			resetInputs() ;
 			resetDirections() ;
 		}
@@ -463,9 +529,37 @@ class Graph{
 			cout << ", so cant put '" << str << "' at that point.\n" ;
 		}
 		
+		void keepFood(){
+			if(food.eaten){
+				food = Food::atRandomPoint() ;
+			}
+			string foodStr = "O" ;
+			if(Food::count % 5 == 0){
+				food.score = 5 ;
+			}
+			cout << "food ocunt: " << Food::count << ", food score: " << food.score ;
+			if(food.score == 1){
+				foodStr = "o" ;
+			}else{
+				foodStr = "O" ;
+			}
+			setInput(foodStr, food.at ) ;
+			
+		}
+		
+		int snakeAteFood(){
+			if(food.at.containsSnake()){
+				food.eaten = 1 ;
+				snake.increaseLength() ;
+				return 1 ;
+			}
+			return 0 ;
+		}
+		
 		void plotSnake(){
 			int i ;
 			resetInputs() ;
+			keepFood() ;
 			Point currentPoint = snake.tailAt ;
 			while( 1 ){
 				if(!currentPoint.isInsideBounds()){
@@ -481,20 +575,21 @@ class Graph{
 					}
 //				}
 				if(currentPoint == snake.headAt ){
-					switch ( currentPoint.getDirection() )	{
-						case Direction( d_up ):
-							inputLetter = "^" ;
-							break ;
-						case Direction(d_right):
-							inputLetter = ">" ;
-							break ;
-						case Direction (d_left ):
-							inputLetter = "<" ;
-							break ;
-						case Direction (d_down)	:
-							inputLetter = "+" ;
-							break ;		
-					}
+//					switch ( currentPoint.getDirection() )	{
+//						case Direction( d_up ):
+//							inputLetter = "^" ;
+//							break ;
+//						case Direction(d_right):
+//							inputLetter = ">" ;
+//							break ;
+//						case Direction (d_left ):
+//							inputLetter = "<" ;
+//							break ;
+//						case Direction (d_down)	:
+//							inputLetter = "+" ;
+//							break ;		
+//					}
+					inputLetter = "@" ;
 				}else if(currentPoint == snake.tailAt){
 					inputLetter = snake.tailLetter ;
 				}else{
@@ -510,6 +605,19 @@ class Graph{
 			}
 			cout << snake.headAt.toString("Head at: ") ;
 			cout << endl << "Length: " << snake.getLength() << endl ;
+		}
+		void showCenteredText( string s){
+			int l = s.length() ;
+			int startFromLeft = 1 ;
+			if(l >= WIDTH ){
+				startFromLeft = 1 ;
+			}else{
+				startFromLeft = (WIDTH -l)/2 + 1 ;
+			}
+			resetInputs() ;
+//			Point putAt( HEIGHT / 2, startFromLeft) ;
+			putRegularly(s, Point(HEIGHT / 2 , startFromLeft )) ;
+			show() ;
 		}
 	private:		
 		void setInput(string str, Point at){
@@ -580,26 +688,47 @@ class Graph{
 int Graph::height = HEIGHT ;
 int Graph::width = WIDTH ;
 
+class DirectionInput{
+	public:
+		static Direction input, last ;
+//		static int interval ;
+		static Direction get(){
+			
+		}
+		static void listen(){
+			
+			
+			
+		}
+		static void map(){
+			
+		}
+};
+Direction DirectionInput::input = d_right ;
+Direction DirectionInput::last = d_right ;
+//int DirectionInput::interval = 800 ;
+
 
 main(){
+	srand(clock()) ;
 	Graph G ;
 	G.snake.addPart(Point(2, 2), d_right, s_tail ) ;
-	G.snake.addPart(Point(2, 3), d_right) ;
-	G.snake.addPart(Point(2, 4), d_down) ;
-	G.snake.addPart(Point(3, 4), d_down) ;
-	G.snake.addPart(Point(4, 4), d_down) ;
-	G.snake.addPart(Point(5, 4), d_right) ;
-	G.snake.addPart(Point(5, 5), d_down) ;
-	G.snake.addPart(Point(6, 5), d_down) ;
-	G.snake.addPart(Point(7, 5), d_right) ;
-	G.snake.addPart(Point(7, 6), d_right) ;
-	G.snake.addPart(Point(7, 7), d_right) ;
-	G.snake.addPart(Point(7, 8), d_right , s_head) ;
+	G.snake.addPart(Point(2, 3), d_right, s_head) ;
+//	G.snake.addPart(Point(2, 4), d_down) ;
+//	G.snake.addPart(Point(3, 4), d_down) ;
+//	G.snake.addPart(Point(4, 4), d_down) ;
+//	G.snake.addPart(Point(5, 4), d_right) ;
+//	G.snake.addPart(Point(5, 5), d_down) ;
+//	G.snake.addPart(Point(6, 5), d_down) ;
+//	G.snake.addPart(Point(7, 5), d_right) ;
+//	G.snake.addPart(Point(7, 6), d_right) ;
+//	G.snake.addPart(Point(7, 7), d_right) ;
+//	G.snake.addPart(Point(7, 8), d_right , s_head) ;
 //	G.snake.addPart(Point(5, 6), d_right , s_head) ;
 	cout << "Use arrow keys to move the snake.\n" ;
 	cout << "Press any key to start game,\n 'esc' to end game at any moment." ;
 	char input ;
-	int i = 0 ;
+	int i = 0, score = 0 ;
 	input = getch() ;
 	if(input == 27){
 		exit(0) ;
@@ -629,15 +758,17 @@ main(){
 					cout << "invalid input '" << input << "' .\n";			
 			}
 			if(G.snake.ateItself() || G.snake.headAt.isInBorder()){
-				cout << "\n\nYou died." ;
+//				cout << "\n\nYou died." ;
+				G.showCenteredText("Game Over!!") ;
 				break ;
 			}
-//			}
-//			i++ ;
-//			if( i % 6 == 0){
-//			G.snake.increaseLength() ;
-//			}
-//		}
+			cout << "Food count: " << Food::count ;
+			if(G.snakeAteFood()){
+				score += G.food.score ;
+				G.plotSnake() ;
+				cout << "\n\aAte food." ;
+			}
+			cout << "\n\t\tScore: " << score ;
 	}
 	
 }
