@@ -1,6 +1,5 @@
 #include "header.h"
 
-
 main(){
 	cout << "\nValue of globalVariable = " << globalVariable ;
 	sharedFunction( 4) ;
@@ -11,4 +10,6 @@ main(){
 	a.externalDefinedMethod();
 	globalArray[2] = 6 ;
 	cout << "\nValue from array: " << globalArray[2] ;
+	cout << "\nValue of Defined Const: " << DEFINED_CONST ;
 }
+

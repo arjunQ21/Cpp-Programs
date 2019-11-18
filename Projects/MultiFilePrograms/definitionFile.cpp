@@ -1,6 +1,7 @@
 #include "header.h"
 
 int globalVariable = 89 ;
+int globalArray[5] ;
 static int notSharedGlobalVariable = 90 ;
 
 int sharedFunction( int a){
