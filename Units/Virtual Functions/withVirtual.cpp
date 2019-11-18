@@ -4,9 +4,7 @@ using namespace std ;
 
 class Base{
 	public:
-		virtual void show(){ 
-			cout << "\nBase" ;
-		}
+		virtual void show() = 0 ;
 };
 class Derv1: public Base{
 	public:
@@ -15,19 +13,19 @@ class Derv1: public Base{
 		}
 };
 class Derv2: public Base{
-//	public:
-//		void show(){ 
-//			cout << "\nDerv2" ;
-//		}
+	public:
+		void show(){ 
+			cout << "\nDerv2" ;
+		}
 };
 
 main(){
 	Base* ptr ;
-	Base base ;
+//	Base base ;
 	Derv1 dr1 ;
 	Derv2 dr2 ;
-	ptr = &base ;
-	ptr->show() ;
+//	ptr = &base ;
+//	ptr->show() ;
 	ptr = &dr1 ;
 	ptr->show() ;
 	ptr = &dr2 ;

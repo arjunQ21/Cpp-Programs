@@ -9,6 +9,9 @@ class Dollar{
 			dollars = d ;
 			cents = c ;
 		}
+		void show(){
+			cout << "$" << dollars << ", " << cents << "cents " ;
+		}
 		
 };
 class Rupees{
@@ -21,10 +24,14 @@ class Rupees{
 		void show(){
 			cout << "Rs: " << rs << ", Paisa: " << paisa <<endl;
 		}
+//		operator Dollar ( Dollar d){
+//			int cents = (rs + paisa / 100 )
+//		}
 };
 
 main(){
 	Dollar dol(4, 5) ;
 	Rupees Rs = dol ;
+	dol.show() ;
 	Rs.show() ;
 }
