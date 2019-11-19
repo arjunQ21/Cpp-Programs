@@ -48,6 +48,7 @@ class Record: public Admin, public Account{
 	protected:
 		int recordNo;
 	public: 
+	// This also works
 //		Record(string name, int code, float salary, int yrs, int recNo):Person(name , code), Admin(name, code, yrs), Account(name, code, salary){
 //			recordNo = recNo ;
 //		}
@@ -64,7 +65,7 @@ class Record: public Admin, public Account{
 
 main(){
 	Record This("arjun", 45, 567, 3, 890) ;
-//	This.display() ;
+	This.display() ;
 	Admin admin(5) ;
 	admin.display() ;
 }
